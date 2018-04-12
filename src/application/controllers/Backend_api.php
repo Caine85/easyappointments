@@ -54,7 +54,8 @@ class Backend_api extends CI_Controller {
         {
             $this->config->set_item('language', $this->session->userdata('language'));
             $this->lang->load('translations', $this->session->userdata('language'));
-        } else
+        }
+        else
         {
             $this->lang->load('translations', $this->config->item('language')); // default
         }
@@ -191,18 +192,23 @@ class Backend_api extends CI_Controller {
             if ($this->input->post('filter_type') == FILTER_TYPE_PROVIDER)
             {
                 $where_id = 'id_users_provider';
-            } else
+            }
+            else
             {
                 $where_id = 'id_services';
             }
 
             // Get appointments
-            $where_clause = [
-                $where_id => $this->input->post('record_id'),
-                'DATE(start_datetime) >=' => $this->input->post('start_date'),
-                'DATE(start_datetime) <=' => date('Y-m-d', strtotime($this->input->post('end_date') . ' +1 day')),
-                'is_unavailable' => FALSE
-            ];
+            $record_id = $this->db->escape($_POST['record_id']);
+            $start_date = $this->db->escape($_POST['start_date']);
+            $end_date = $this->db->escape(date('Y-m-d', strtotime($_POST['end_date'] . ' +1 day')));
+
+            $where_clause = $where_id . ' = ' . $record_id . '
+                AND ((start_datetime > ' . $start_date . ' AND start_datetime < ' . $end_date . ') 
+                or (end_datetime > ' . $start_date . ' AND end_datetime < ' . $end_date . ') 
+                or (start_datetime <= ' . $start_date . ' AND end_datetime >= ' . $end_date . ')) 
+                AND is_unavailable = 0
+            ';
 
             $response['appointments'] = $this->appointments_model->get_batch($where_clause);
 
@@ -216,12 +222,12 @@ class Backend_api extends CI_Controller {
             // Get unavailable periods (only for provider).
             if ($this->input->post('filter_type') == FILTER_TYPE_PROVIDER)
             {
-                $where_clause = [
-                    $where_id => $this->input->post('record_id'),
-                    'DATE(start_datetime) >=' => $this->input->post('start_date'),
-                    'DATE(start_datetime) <=' => date('Y-m-d', strtotime($this->input->post('end_date') . ' +1 day')),
-                    'is_unavailable' => TRUE
-                ];
+                $where_clause = $where_id . ' = ' . $record_id . '
+                    AND ((start_datetime > ' . $start_date . ' AND start_datetime < ' . $end_date . ') 
+                    or (end_datetime > ' . $start_date . ' AND end_datetime < ' . $end_date . ') 
+                    or (start_datetime <= ' . $start_date . ' AND end_datetime >= ' . $end_date . ')) 
+                    AND is_unavailable = 1
+                ';
 
                 $response['unavailables'] = $this->appointments_model->get_batch($where_clause);
             }
@@ -305,7 +311,8 @@ class Backend_api extends CI_Controller {
                 'company_name' => $this->settings_model->get_setting('company_name'),
                 'company_link' => $this->settings_model->get_setting('company_link'),
                 'company_email' => $this->settings_model->get_setting('company_email'),
-                'date_format' => $this->settings_model->get_setting('date_format')
+                'date_format' => $this->settings_model->get_setting('date_format'),
+                'time_format' => $this->settings_model->get_setting('time_format')
             ];
 
             // :: SYNC APPOINTMENT CHANGES WITH GOOGLE CALENDAR
@@ -328,7 +335,8 @@ class Backend_api extends CI_Controller {
                             $service, $customer, $company_settings);
                         $appointment['id_google_calendar'] = $google_event->id;
                         $this->appointments_model->add($appointment); // Store google calendar id.
-                    } else
+                    }
+                    else
                     {
                         $this->google_sync->update_appointment($appointment, $provider,
                             $service, $customer, $company_settings);
@@ -355,7 +363,8 @@ class Backend_api extends CI_Controller {
                     $customer_message = new Text($this->lang->line('thank_you_for_appointment'));
                     $provider_title = new Text($this->lang->line('appointment_added_to_your_plan'));
                     $provider_message = new Text($this->lang->line('appointment_link_description'));
-                } else
+                }
+                else
                 {
                     $customer_title = new Text($this->lang->line('appointment_changes_saved'));
                     $customer_message = new Text('');
@@ -396,7 +405,8 @@ class Backend_api extends CI_Controller {
                 $this->output
                     ->set_content_type('application/json')
                     ->set_output(json_encode(AJAX_SUCCESS));
-            } else
+            }
+            else
             {
                 $this->output
                     ->set_content_type('application/json')
@@ -452,7 +462,8 @@ class Backend_api extends CI_Controller {
                 'company_name' => $this->settings_model->get_setting('company_name'),
                 'company_email' => $this->settings_model->get_setting('company_email'),
                 'company_link' => $this->settings_model->get_setting('company_link'),
-                'date_format' => $this->settings_model->get_setting('date_format')
+                'date_format' => $this->settings_model->get_setting('date_format'),
+                'time_format' => $this->settings_model->get_setting('time_format')
             ];
 
             // :: DELETE APPOINTMENT RECORD FROM DATABASE
@@ -516,7 +527,8 @@ class Backend_api extends CI_Controller {
                 $this->output
                     ->set_content_type('application/json')
                     ->set_output(json_encode(AJAX_SUCCESS));
-            } else
+            }
+            else
             {
                 $this->output
                     ->set_content_type('application/json')
@@ -688,7 +700,8 @@ class Backend_api extends CI_Controller {
                         $google_event = $this->google_sync->add_unavailable($provider, $unavailable);
                         $unavailable['id_google_calendar'] = $google_event->id;
                         $this->appointments_model->add_unavailable($unavailable);
-                    } else
+                    }
+                    else
                     {
                         $google_event = $this->google_sync->update_unavailable($provider, $unavailable);
                     }
@@ -704,7 +717,8 @@ class Backend_api extends CI_Controller {
                 $this->output
                     ->set_content_type('application/json')
                     ->set_output(json_encode(['warnings' => $warnings]));
-            } else
+            }
+            else
             {
                 $this->output
                     ->set_content_type('application/json')
@@ -767,7 +781,8 @@ class Backend_api extends CI_Controller {
                 $this->output
                     ->set_content_type('application/json')
                     ->set_output(json_encode(['warnings' => $warnings]));
-            } else
+            }
+            else
             {
                 $this->output
                     ->set_content_type('application/json')
@@ -1434,7 +1449,8 @@ class Backend_api extends CI_Controller {
                 $this->load->model('settings_model');
                 $settings = json_decode($this->input->post('settings'), TRUE);
                 $this->settings_model->save_settings($settings);
-            } else
+            }
+            else
             {
                 if ($this->input->post('type') == SETTINGS_USER)
                 {
@@ -1566,7 +1582,8 @@ class Backend_api extends CI_Controller {
                 $this->output
                     ->set_content_type('application/json')
                     ->set_output(json_encode($calendars));
-            } else
+            }
+            else
             {
                 $this->output
                     ->set_content_type('application/json')

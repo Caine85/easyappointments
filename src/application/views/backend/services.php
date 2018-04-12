@@ -6,6 +6,7 @@
         csrfToken     : <?= json_encode($this->security->get_csrf_hash()) ?>,
         baseUrl       : <?= json_encode($base_url) ?>,
         dateFormat    : <?= json_encode($date_format) ?>,
+        timeFormat    : <?= json_encode($time_format) ?>,
         services      : <?= json_encode($services) ?>,
         categories    : <?= json_encode($categories) ?>,
         user          : {
@@ -92,7 +93,7 @@
 
                     <div class="form-group">
                         <label for="service-name"><?= lang('name') ?> *</label>
-                        <input id="service-name" class="form-control required">
+                        <input id="service-name" class="form-control required" maxlength="128">
                     </div>
 
                     <div class="form-group">
@@ -107,7 +108,7 @@
 
                     <div class="form-group">
                         <label for="service-currency"><?= lang('currency') ?></label>
-                        <input id="service-currency" class="form-control">
+                        <input id="service-currency" class="form-control" maxlength="32">
                     </div>
 
                     <div class="form-group">

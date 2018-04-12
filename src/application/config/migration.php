@@ -1,4 +1,5 @@
 <?php defined('BASEPATH') OR exit('No direct script access allowed');
+
 /*
 |--------------------------------------------------------------------------
 | Enable/Disable Migrations
@@ -36,7 +37,7 @@ $config['migration_table'] = 'ea_migrations';
 | be upgraded / downgraded to.
 |
 */
-$config['migration_version'] = 8; // current
+$config['migration_version'] = 10; // current
 
 
 /*

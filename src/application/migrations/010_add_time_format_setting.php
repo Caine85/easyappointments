@@ -5,22 +5,23 @@
  *
  * @package     EasyAppointments
  * @author      A.Tselegidis <alextselegidis@gmail.com>
- * @copyright   Copyright (c) 2013 - 2017, Alex Tselegidis
+ * @copyright   Copyright (c) 2013 - 2018, Alex Tselegidis
  * @license     http://opensource.org/licenses/GPL-3.0 - GPLv3
  * @link        http://easyappointments.org
  * @since       v1.3.0
  * ---------------------------------------------------------------------------- */
 
-/**
- * Quickly fetch the value of a framework configuration.
- *
- * @param string $key Configuration key.
- *
- * @return mixed Returns the configuration value.
- */
-function config($key)
-{
-    $framework = &get_instance();
+class Migration_Add_time_format_setting extends CI_Migration {
+    public function up()
+    {
+        $this->db->insert('ea_settings', [
+            'name' => 'time_format',
+            'value' => 'regular'
+        ]);
+    }
 
-    return $framework->config->item($key);
+    public function down()
+    {
+        $this->db->delete('ea_settings', ['name' => 'time_format']);
+    }
 }

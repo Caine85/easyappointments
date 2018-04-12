@@ -219,8 +219,11 @@ window.BackendCalendarDefaultView = window.BackendCalendarDefaultView || {};
             // If current value is service, then the sync buttons must be disabled.
             if ($('#select-filter-item option:selected').attr('type') === FILTER_TYPE_SERVICE) {
                 $('#google-sync, #enable-sync, #insert-appointment, #insert-unavailable').prop('disabled', true);
+                $('#calendar').fullCalendar('option', 'selectable', false);
+                $('#calendar').fullCalendar('option', 'editable', false);
             } else {
                 $('#google-sync, #enable-sync, #insert-appointment, #insert-unavailable').prop('disabled', false);
+                $('#calendar').fullCalendar('option', 'editable', true);
 
                 // If the user has already the sync enabled then apply the proper style changes.
                 if ($('#select-filter-item option:selected').attr('google-sync') === 'true') {
@@ -330,7 +333,7 @@ window.BackendCalendarDefaultView = window.BackendCalendarDefaultView || {};
                 '<strong>' + EALang.email + '</strong> '
                 + event.data.customer.email
                 + '<br>' +
-                '<strong>' + EALang.provider + '</strong> '
+                '<strong>' + EALang.phone_number + '</strong> '
                 + event.data.customer.phone_number
                 + '<hr>' +
                 '<div class="text-center">' +
@@ -473,7 +476,7 @@ window.BackendCalendarDefaultView = window.BackendCalendarDefaultView || {};
 
                 // Display success notification to user.
                 var undoFunction = function () {
-                    unavailable.end_datetime = event.data.end_datetime =  Date.parseExact(
+                    unavailable.end_datetime = event.data.end_datetime = Date.parseExact(
                         unavailable.end_datetime, 'yyyy-MM-dd HH:mm:ss')
                         .add({minutes: -delta.minutes()})
                         .toString('yyyy-MM-dd HH:mm:ss');
@@ -1059,6 +1062,23 @@ window.BackendCalendarDefaultView = window.BackendCalendarDefaultView || {};
                 throw new Error('Invalid date format setting provided!', GlobalVariables.dateFormat);
         }
 
+        // Time formats
+        var timeFormat = '';
+        var slotTimeFormat= '';
+
+        switch (GlobalVariables.timeFormat) {
+            case 'military':
+                timeFormat = 'H:mm';
+                slotTimeFormat = 'H(:mm)';
+                break;
+            case 'regular':
+                timeFormat = 'h:mm A';
+                slotTimeFormat = 'h(:mm) A';
+                break;
+            default:
+                throw new Error('Invalid time format setting provided!', GlobalVariables.timeFormat);
+        }
+
         var defaultView = window.innerWidth < 468 ? 'agendaDay' : 'agendaWeek';
 
         // Initialize page calendar
@@ -1068,8 +1088,8 @@ window.BackendCalendarDefaultView = window.BackendCalendarDefaultView || {};
             editable: true,
             firstDay: 0,
             snapDuration: '00:30:00',
-            timeFormat: 'h:mm A',
-            slotLabelFormat : 'h(:mm) A',
+            timeFormat: timeFormat,
+            slotLabelFormat: slotTimeFormat,
             allDayText: EALang.all_day,
             columnFormat: columnFormat,
             titleFormat: 'MMMM YYYY',
@@ -1082,7 +1102,7 @@ window.BackendCalendarDefaultView = window.BackendCalendarDefaultView || {};
             // Selectable
             selectable: true,
             selectHelper: true,
-            select: function(start, end, jsEvent, view) {
+            select: function (start, end, jsEvent, view) {
                 if (!start.hasTime() || !end.hasTime()) {
                     return;
                 }
