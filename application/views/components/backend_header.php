@@ -83,6 +83,16 @@
                 </div>
             </li>
 
+            <?php $hidden = can('view', PRIV_USERS) ? '' : 'd-none'; ?>
+            <?php $active = $active_menu == 'locations' ? 'active' : ''; ?>
+            <li class="nav-item <?= $active . $hidden ?>">
+                <a href="<?= site_url('locations') ?>" class="nav-link"
+                   data-tippy-content="<?= lang('manage_locations_hint') ?>">
+                    <i class="fas fa-map-marker-alt me-2"></i>
+                    <?= lang('locations') ?>
+                </a>
+            </li>
+
             <?php slot('before_user_nav_item'); ?>
 
             <?php $hidden = can('view', PRIV_SYSTEM_SETTINGS) || can('view', PRIV_USER_SETTINGS) ? '' : 'd-none'; ?>

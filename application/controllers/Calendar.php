@@ -75,6 +75,7 @@ class Calendar extends EA_Controller
         $this->load->model('customers_model');
         $this->load->model('services_model');
         $this->load->model('providers_model');
+        $this->load->model('locations_model');
         $this->load->model('roles_model');
 
         $this->load->library('accounts');
@@ -169,6 +170,7 @@ class Calendar extends EA_Controller
         }
 
         $available_services = $this->services_model->get_available_services();
+        $available_locations = $this->locations_model->get_all();
 
         $calendar_view = request('view', $user['settings']['calendar_view']);
 
@@ -558,12 +560,19 @@ class Calendar extends EA_Controller
             $start_date = request('start_date') . ' 00:00:00';
 
             $end_date = request('end_date') . ' 23:59:59';
+            $location_id = request('location_id');
+
+            $where_appointments = [
+                'start_datetime >=' => $start_date,
+                'end_datetime <=' => $end_date,
+            ];
+
+            if ($location_id) {
+                $where_appointments['location_id'] = $location_id;
+            }
 
             $response = [
-                'appointments' => $this->appointments_model->get([
-                    'start_datetime >=' => $start_date,
-                    'end_datetime <=' => $end_date,
-                ]),
+                'appointments' => $this->appointments_model->get($where_appointments),
                 'unavailabilities' => $this->unavailabilities_model->get([
                     'start_datetime >=' => $start_date,
                     'end_datetime <=' => $end_date,
@@ -703,6 +712,11 @@ class Calendar extends EA_Controller
                 ')) 
                 AND is_unavailability = 0
             ';
+
+            $location_id = request('location_id');
+            if ($location_id) {
+                $where_clause .= ' AND location_id = ' . $this->db->escape($location_id);
+            }
 
             $response['appointments'] = $this->appointments_model->get($where_clause);
 

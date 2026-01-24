@@ -63,6 +63,7 @@ class Booking extends EA_Controller
     {
         parent::__construct();
 
+        $this->load->model('locations_model');
         $this->load->model('appointments_model');
         $this->load->model('providers_model');
         $this->load->model('admins_model');
@@ -136,6 +137,7 @@ class Booking extends EA_Controller
 
         $available_services = $this->services_model->get_available_services(true);
         $available_providers = $this->providers_model->get_available_providers(true);
+        $available_locations = $this->locations_model->get_all();
 
         foreach ($available_providers as &$available_provider) {
             // Only expose the required provider data.
@@ -267,11 +269,13 @@ class Booking extends EA_Controller
             'customer_token' => $customer_token,
             'default_language' => setting('default_language'),
             'default_timezone' => setting('default_timezone'),
+            'available_locations' => $available_locations,
         ]);
 
         html_vars([
             'available_services' => $available_services,
             'available_providers' => $available_providers,
+            'available_locations' => $available_locations,
             'theme' => $theme,
             'company_name' => $company_name,
             'company_logo' => $company_logo,
@@ -511,7 +515,8 @@ class Booking extends EA_Controller
         $hour = $appointment_start->format('H:i');
 
         if ($appointment['id_users_provider'] === ANY_PROVIDER) {
-            $appointment['id_users_provider'] = $this->search_any_provider($appointment['id_services'], $date, $hour);
+                $location_id = isset($appointment['location_id']) ? (int)$appointment['location_id'] : null;
+                $appointment['id_users_provider'] = $this->search_any_provider($appointment['id_services'], $date, $hour, $location_id);
 
             return $appointment['id_users_provider'];
         }
@@ -551,14 +556,18 @@ class Booking extends EA_Controller
      * @param int $service_id Service ID
      * @param string $date Selected date (Y-m-d).
      * @param string|null $hour Selected hour (H:i).
+     * @param int $service_id Service ID
+     * @param string $date Selected date (Y-m-d).
+     * @param string|null $hour Selected hour (H:i).
+     * @param int|null $location_id Location ID.
      *
      * @return int|null Returns the ID of the provider that can provide the service at the selected date.
      *
      * @throws Exception
      */
-    protected function search_any_provider(int $service_id, string $date, ?string $hour = null): ?int
+    protected function search_any_provider(int $service_id, string $date, ?string $hour = null, ?int $location_id = null): ?int
     {
-        $available_providers = $this->providers_model->get_available_providers(true);
+        $available_providers = $this->providers_model->get_available_providers(true, $location_id);
 
         $service = $this->services_model->find($service_id);
 
@@ -605,6 +614,7 @@ class Booking extends EA_Controller
             $provider_id = request('provider_id');
             $service_id = request('service_id');
             $selected_date = request('selected_date');
+            $location_id = request('location_id') ? (int)request('location_id') : null;
 
             // Do not continue if there was no provider selected (more likely there is no provider in the system).
 
@@ -625,7 +635,7 @@ class Booking extends EA_Controller
             $service = $this->services_model->find($service_id);
 
             if ($provider_id === ANY_PROVIDER) {
-                $providers = $this->providers_model->get_available_providers(true);
+                $providers = $this->providers_model->get_available_providers(true, $location_id);
 
                 $available_hours = [];
 

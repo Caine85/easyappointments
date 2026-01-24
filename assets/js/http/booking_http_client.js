@@ -18,6 +18,7 @@
  */
 App.Http.Booking = (function () {
     const $selectDate = $('#select-date');
+    const $selectLocation = $('#select-location');
     const $selectService = $('#select-service');
     const $selectProvider = $('#select-provider');
     const $availableHours = $('#available-hours');
@@ -67,6 +68,7 @@ App.Http.Booking = (function () {
 
         const data = {
             csrf_token: vars('csrf_token'),
+            location_id: $selectLocation.val(),
             service_id: $selectService.val(),
             provider_id: $selectProvider.val(),
             selected_date: selectedDate,
@@ -252,6 +254,7 @@ App.Http.Booking = (function () {
         const url = App.Utils.Url.siteUrl('booking/get_unavailable_dates');
 
         const data = {
+            location_id: $selectLocation.val(),
             provider_id: providerId,
             service_id: serviceId,
             selected_date: encodeURIComponent(selectedDateString),

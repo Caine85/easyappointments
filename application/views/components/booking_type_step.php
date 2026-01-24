@@ -13,6 +13,25 @@
         <div class="row frame-content">
             <div class="col col-md-8 offset-md-2">
                 <div class="mb-3">
+                    <label for="select-location">
+                        <strong><?= lang('location') ?></strong>
+                    </label>
+
+                    <select id="select-location" class="form-select">
+                        <option value="">
+                            <?= lang('please_select') ?>
+                        </option>
+                        <?php foreach (vars('available_locations') as $location): ?>
+                            <option value="<?= $location['id'] ?>">
+                                <?= e($location['name']) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <?php slot('after_select_location'); ?>
+
+                <div class="mb-3">
                     <label for="select-service">
                         <strong><?= lang('service') ?></strong>
                     </label>

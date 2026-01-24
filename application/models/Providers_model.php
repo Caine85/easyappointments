@@ -627,13 +627,19 @@ class Providers_model extends EA_Model
      * Get all the provider records that are assigned to at least one service.
      *
      * @param bool $without_private Only include the public providers.
+     * @param int|null $location_id Filter by location ID.
      *
      * @return array Returns an array of providers.
      */
-    public function get_available_providers(bool $without_private = false): array
+    public function get_available_providers(bool $without_private = false, ?int $location_id = null): array
     {
         if ($without_private) {
             $this->db->where('users.is_private', false);
+        }
+
+        if ($location_id) {
+            $this->db->join('locations_providers', 'locations_providers.user_id = users.id', 'inner');
+            $this->db->where('locations_providers.location_id', $location_id);
         }
 
         $providers = $this->db
@@ -654,6 +660,23 @@ class Providers_model extends EA_Model
         }
 
         return $providers;
+    }
+
+    /**
+     * Get the locations of a provider.
+     *
+     * @param int $provider_id
+     * @return array
+     */
+    public function get_locations(int $provider_id): array
+    {
+        return $this->db
+            ->select('locations.*')
+            ->from('locations')
+            ->join('locations_providers', 'locations_providers.location_id = locations.id', 'inner')
+            ->where('locations_providers.user_id', $provider_id)
+            ->get()
+            ->result_array();
     }
 
     /**

@@ -18,6 +18,7 @@
  */
 App.Pages.Booking = (function () {
     const $selectDate = $('#select-date');
+    const $selectLocation = $('#select-location');
     const $selectService = $('#select-service');
     const $selectProvider = $('#select-provider');
     const $selectTimezone = $('#select-timezone');
@@ -105,7 +106,7 @@ App.Pages.Booking = (function () {
 
         App.Utils.UI.initializeDatePicker($selectDate, {
             inline: true,
-            minDate: moment().subtract(1, 'day').set({hours: 23, minutes: 59, seconds: 59}).toDate(),
+            minDate: moment().subtract(1, 'day').set({ hours: 23, minutes: 59, seconds: 59 }).toDate(),
             maxDate: moment().add(vars('future_booking_limit'), 'days').toDate(),
             onChange: (selectedDates) => {
                 App.Http.Booking.getAvailableHours(moment(selectedDates[0]).format('YYYY-MM-DD'));
@@ -124,9 +125,9 @@ App.Pages.Booking = (function () {
 
                     const displayedMonthMoment = moment(
                         instance.currentYearElement.value +
-                            '-' +
-                            String(Number(instance.monthsDropdownContainer.value) + 1).padStart(2, '0') +
-                            '-01',
+                        '-' +
+                        String(Number(instance.monthsDropdownContainer.value) + 1).padStart(2, '0') +
+                        '-01',
                     );
 
                     const monthChangeStep = detectDatepickerMonthChangeStep(previousMoment, displayedMonthMoment);
@@ -146,9 +147,9 @@ App.Pages.Booking = (function () {
 
                     const displayedMonthMoment = moment(
                         instance.currentYearElement.value +
-                            '-' +
-                            (Number(instance.monthsDropdownContainer.value) + 1) +
-                            '-01',
+                        '-' +
+                        (Number(instance.monthsDropdownContainer.value) + 1) +
+                        '-01',
                     );
 
                     const monthChangeStep = detectDatepickerMonthChangeStep(previousMoment, displayedMonthMoment);
@@ -173,6 +174,12 @@ App.Pages.Booking = (function () {
         addEventListeners();
 
         optimizeContactInfoDisplay();
+
+        // Handle Location URL Param
+        const selectedLocationId = App.Utils.Url.queryParam('location_id');
+        if (selectedLocationId) {
+            $selectLocation.val(selectedLocationId);
+        }
 
         const serviceOptionCount = $selectService.find('option').length;
 
@@ -319,6 +326,26 @@ App.Pages.Booking = (function () {
      * Add the page event listeners.
      */
     function addEventListeners() {
+        /**
+         * Event: Selected Location "Changed"
+         */
+        $selectLocation.on('change', () => {
+            const locationId = $selectLocation.val();
+            const url = new URL(window.location.href);
+
+            if (locationId) {
+                url.searchParams.set('location_id', locationId);
+            } else {
+                url.searchParams.delete('location_id');
+            }
+
+            // Reset service and provider selections when location changes
+            url.searchParams.delete('service');
+            url.searchParams.delete('provider');
+
+            window.location.href = url.toString();
+        });
+
         /**
          * Event: Timezone "Changed"
          */
@@ -845,7 +872,7 @@ App.Pages.Booking = (function () {
         let endMoment;
 
         if (service.duration && startMoment) {
-            endMoment = startMoment.clone().add({'minutes': parseInt(service.duration)});
+            endMoment = startMoment.clone().add({ 'minutes': parseInt(service.duration) });
         } else {
             endMoment = moment();
         }

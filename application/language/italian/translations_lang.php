@@ -485,4 +485,9 @@ $lang['calendar_url'] = 'URL Calendario';
 $lang['please_select'] = 'Seleziona';
 $lang['secret_header'] = 'Secret Header';
 $lang['search'] = 'Search';
+$lang['locations'] = 'Sedi';
+$lang['manage_locations_hint'] = 'Gestisci le sedi aziendali.';
+$lang['location_saved'] = 'Sede salvata con successo.';
+$lang['location_deleted'] = 'Sede cancellata con successo.';
+$lang['delete_location'] = 'Cancella Sede';
 // End

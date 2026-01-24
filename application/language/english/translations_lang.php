@@ -485,4 +485,9 @@ $lang['calendar_url'] = 'Calendar URL';
 $lang['please_select'] = 'Please Select';
 $lang['secret_header'] = 'Secret Header';
 $lang['search'] = 'Search';
+$lang['locations'] = 'Locations';
+$lang['manage_locations_hint'] = 'Manage the company locations.';
+$lang['location_saved'] = 'Location saved successfully.';
+$lang['location_deleted'] = 'Location deleted successfully.';
+$lang['delete_location'] = 'Delete Location';
 // End

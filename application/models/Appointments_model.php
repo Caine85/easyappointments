@@ -184,6 +184,24 @@ class Appointments_model extends EA_Model
             $this->db->where($where);
         }
 
+        // Secretary Scope Logic
+        $user_id = $this->session->userdata('user_id');
+        $role_slug = $this->session->userdata('role_slug');
+
+        if ($role_slug === DB_SLUG_SECRETARY) {
+             // We need to fetch the scope first. Ideally this is cached or in session, but for now fetch from DB.
+             // Note: Assuming 'appointments_view_scope' is in 'users' table or 'user_settings'. 
+             // Migration added it to 'users'.
+            $scope_query = $this->db->select('appointments_view_scope')->get_where('users', ['id' => $user_id]);
+            
+            if ($scope_query->num_rows() > 0) {
+                $scope = $scope_query->row()->appointments_view_scope;
+                if ($scope === 'own') {
+                    $this->db->where('created_by', $user_id);
+                }
+            }
+        }
+
         if ($order_by) {
             $this->db->order_by($this->quote_order_by($order_by));
         }
@@ -658,7 +676,18 @@ class Appointments_model extends EA_Model
      */
     public function calculate_end_datetime(array $appointment): string
     {
-        $duration = $this->db->get_where('services', ['id' => $appointment['id_services']])?->row()?->duration;
+        // Check for override
+        $override = $this->db
+            ->select('duration_override')
+            ->from('services_providers')
+            ->where('id_users', $appointment['id_users_provider'])
+            ->where('id_services', $appointment['id_services'])
+            ->get()
+            ->row();
+
+        $duration = ($override && $override->duration_override) 
+            ? $override->duration_override 
+            : $this->db->get_where('services', ['id' => $appointment['id_services']])->row()->duration;
 
         $end_date_time_object = new DateTime($appointment['start_datetime']);
 
