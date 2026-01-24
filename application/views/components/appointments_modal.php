@@ -127,8 +127,18 @@
                                 <div class="mb-3">
                                     <label for="appointment-location" class="form-label">
                                         <?= lang('location') ?>
+                                        <span class="text-danger">*</span>
                                     </label>
-                                    <input id="appointment-location" class="form-control">
+                                    <select id="appointment-location" class="form-select required">
+                                        <option value="">
+                                            <?= lang('select_location') ?>
+                                        </option>
+                                        <?php foreach ($available_locations as $location): ?>
+                                            <option value="<?= $location['id'] ?>">
+                                                <?= $location['name'] ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
                                 </div>
 
                                 <div class="mb-3">

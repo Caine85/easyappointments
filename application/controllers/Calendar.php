@@ -48,7 +48,8 @@ class Calendar extends EA_Controller
         'id',
         'start_datetime',
         'end_datetime',
-        'location',
+        'end_datetime',
+        'location_id',
         'notes',
         'color',
         'status',
@@ -188,6 +189,7 @@ class Calendar extends EA_Controller
             'calendar_view' => $calendar_view,
             'available_providers' => $available_providers,
             'available_services' => $available_services,
+            'available_locations' => $available_locations,
             'secretary_providers' => $secretary_providers,
             'edit_appointment' => $edit_appointment,
             'google_sync_feature' => config('google_sync_feature'),
@@ -231,6 +233,10 @@ class Calendar extends EA_Controller
             $customer_data = request('customer_data');
 
             $appointment_data = request('appointment_data');
+            
+            if (empty($appointment_data['location_id'])) {
+                throw new InvalidArgumentException('Location is required.');
+            }
 
             $this->check_event_permissions((int) $appointment_data['id_users_provider']);
 
@@ -642,6 +648,41 @@ class Calendar extends EA_Controller
             $end_date = request('end_date');
             $response['blocked_periods'] = $this->blocked_periods_model->get_for_period($start_date, $end_date);
 
+            // Fetch and attach available providers with potential location-specific working plans
+            $this->load->model('secretaries_model');
+            $available_providers = $this->providers_model->get_available_providers();
+
+             if ($role_slug === DB_SLUG_PROVIDER) {
+                $available_providers = array_values(
+                    array_filter($available_providers, function ($available_provider) use ($user_id) {
+                        return (int) $available_provider['id'] === (int) $user_id;
+                    }),
+                );
+            }
+
+            if ($role_slug === DB_SLUG_SECRETARY) {
+                $secretary = $this->secretaries_model->find($user_id);
+                $secretary_providers = $secretary['providers'];
+
+                $available_providers = array_values(
+                    array_filter($available_providers, function ($available_provider) use ($secretary_providers) {
+                        return in_array($available_provider['id'], $secretary_providers);
+                    }),
+                );
+            }
+
+            if ($location_id) {
+                foreach ($available_providers as &$provider) {
+                    $location_plan = $this->providers_model->get_location_working_plan($provider['id'], is_numeric($location_id) ? (int)$location_id : null);
+                    if (!empty($location_plan) && !empty($location_plan['working_plan'])) {
+                         $provider['settings']['working_plan'] = json_encode($location_plan['working_plan']);
+                         $provider['settings']['working_plan_exceptions'] = json_encode($location_plan['working_plan_exceptions'] ?? []);
+                    }
+                }
+            }
+            
+            $response['providers'] = $available_providers;
+
             json_response($response);
         } catch (Throwable $e) {
             json_exception($e);
@@ -714,7 +755,7 @@ class Calendar extends EA_Controller
             ';
 
             $location_id = request('location_id');
-            if ($location_id) {
+            if ($location_id && $location_id !== FILTER_TYPE_ALL) {
                 $where_clause .= ' AND location_id = ' . $this->db->escape($location_id);
             }
 
@@ -814,6 +855,41 @@ class Calendar extends EA_Controller
             $start_date = request('start_date');
             $end_date = request('end_date');
             $response['blocked_periods'] = $this->blocked_periods_model->get_for_period($start_date, $end_date);
+
+            // Fetch and attach available providers with potential location-specific working plans
+            $this->load->model('secretaries_model'); 
+            $available_providers = $this->providers_model->get_available_providers();
+
+             if ($role_slug === DB_SLUG_PROVIDER) {
+                $available_providers = array_values(
+                    array_filter($available_providers, function ($available_provider) use ($user_id) {
+                        return (int) $available_provider['id'] === (int) $user_id;
+                    }),
+                );
+            }
+
+            if ($role_slug === DB_SLUG_SECRETARY) {
+                $secretary = $this->secretaries_model->find($user_id);
+                $secretary_providers = $secretary['providers'];
+
+                $available_providers = array_values(
+                    array_filter($available_providers, function ($available_provider) use ($secretary_providers) {
+                        return in_array($available_provider['id'], $secretary_providers);
+                    }),
+                );
+            }
+
+            if ($location_id) {
+                foreach ($available_providers as &$provider) {
+                    $location_plan = $this->providers_model->get_location_working_plan($provider['id'], is_numeric($location_id) ? (int)$location_id : null);
+                    if (!empty($location_plan) && !empty($location_plan['working_plan'])) {
+                         $provider['settings']['working_plan'] = json_encode($location_plan['working_plan']);
+                         $provider['settings']['working_plan_exceptions'] = json_encode($location_plan['working_plan_exceptions'] ?? []);
+                    }
+                }
+            }
+            
+            $response['providers'] = $available_providers;
 
             json_response($response);
         } catch (Throwable $e) {

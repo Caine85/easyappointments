@@ -490,4 +490,8 @@ $lang['manage_locations_hint'] = 'Gestisci le sedi aziendali.';
 $lang['location_saved'] = 'Sede salvata con successo.';
 $lang['location_deleted'] = 'Sede cancellata con successo.';
 $lang['delete_location'] = 'Cancella Sede';
+$lang['select_location'] = 'Seleziona Sede';
+$lang['list_day'] = 'Lista Giorno';
+$lang['list_week'] = 'Lista Settimana';
+$lang['list_month'] = 'Lista Mese';
 // End

@@ -101,6 +101,15 @@
                 <input id="phone-number" class="form-control" maxlength="100" disabled>
             </div>
 
+            <div class="mb-3">
+                <label class="form-label" for="providers">
+                    <?= lang('providers') ?>
+                </label>
+                <div id="location-providers" class="card card-body bg-white border">
+                    <!-- JS -->
+                </div>
+            </div>
+
             <?php slot('after_primary_fields'); ?>
         </div>
     </div>

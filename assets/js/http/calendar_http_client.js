@@ -217,6 +217,7 @@ App.Http.Calendar = (function () {
             start_date: moment(startDate).format('YYYY-MM-DD'),
             end_date: moment(endDate).format('YYYY-MM-DD'),
             filter_type: filterType,
+            location_id: window.localStorage.getItem('EasyAppointments.SelectFilterLocation'),
         };
 
         return $.post(url, data);
@@ -237,6 +238,7 @@ App.Http.Calendar = (function () {
             csrf_token: vars('csrf_token'),
             start_date: moment(startDate).format('YYYY-MM-DD'),
             end_date: moment(endDate).format('YYYY-MM-DD'),
+            location_id: window.localStorage.getItem('EasyAppointments.SelectFilterLocation'),
         };
 
         return $.post(url, data);

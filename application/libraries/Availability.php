@@ -61,15 +61,16 @@ class Availability
         array $service,
         array $provider,
         ?int $exclude_appointment_id = null,
+        ?int $location_id = null,
     ): array {
         if ($this->CI->blocked_periods_model->is_entire_date_blocked($date)) {
             return [];
         }
 
         if ($service['attendants_number'] > 1) {
-            $available_hours = $this->consider_multiple_attendants($date, $service, $provider, $exclude_appointment_id);
+            $available_hours = $this->consider_multiple_attendants($date, $service, $provider, $exclude_appointment_id, $location_id);
         } else {
-            $available_periods = $this->get_available_periods($date, $provider, $exclude_appointment_id);
+            $available_periods = $this->get_available_periods($date, $provider, $exclude_appointment_id, $location_id);
 
             $available_hours = $this->generate_available_hours($date, $service, $available_periods);
         }
@@ -98,6 +99,7 @@ class Availability
         array $service,
         array $provider,
         ?int $exclude_appointment_id = null,
+        ?int $location_id = null,
     ): array {
         $unavailability_events = $this->CI->unavailabilities_model->get([
             'is_unavailability' => true,
@@ -107,8 +109,15 @@ class Availability
         ]);
 
         $working_plan = json_decode($provider['settings']['working_plan'], true);
-
         $working_plan_exceptions = json_decode($provider['settings']['working_plan_exceptions'], true);
+
+        if ($location_id) {
+            $location_plan = $this->CI->providers_model->get_location_working_plan($provider['id'], $location_id);
+            if (!empty($location_plan['working_plan'])) {
+                $working_plan = $location_plan['working_plan'];
+                $working_plan_exceptions = $location_plan['working_plan_exceptions'];
+            }
+        }
 
         $working_day = strtolower(date('l', strtotime($date)));
 
@@ -330,16 +339,23 @@ class Availability
      *
      * @throws Exception
      */
-    public function get_available_periods(string $date, array $provider, ?int $exclude_appointment_id = null): array
+    public function get_available_periods(string $date, array $provider, ?int $exclude_appointment_id = null, ?int $location_id = null): array
     {
         // Get the service, provider's working plan and provider appointments.
         $working_plan = json_decode($provider['settings']['working_plan'], true);
-
-        // Get the provider's working plan exceptions.
         $working_plan_exceptions_json = $provider['settings']['working_plan_exceptions'];
 
+        if ($location_id) {
+            $location_plan = $this->CI->providers_model->get_location_working_plan($provider['id'], $location_id);
+            if (!empty($location_plan['working_plan'])) {
+                $working_plan = $location_plan['working_plan'];
+                $working_plan_exceptions_json = json_encode($location_plan['working_plan_exceptions']);
+            }
+        }
+
+        // Get the provider's working plan exceptions.
         $working_plan_exceptions = $working_plan_exceptions_json
-            ? json_decode($provider['settings']['working_plan_exceptions'], true)
+            ? json_decode($working_plan_exceptions_json, true)
             : [];
 
         $escaped_provider_id = $this->CI->db->escape($provider['id']);

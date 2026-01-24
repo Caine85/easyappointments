@@ -272,19 +272,26 @@ class Services_model extends EA_Model
      *
      * @return array Returns an array of services.
      */
-    public function get_available_services(bool $without_private = false): array
+    public function get_available_services(bool $without_private = false, ?int $location_id = null): array
     {
-        if ($without_private) {
-            $this->db->where('services.is_private', false);
-        }
-
-        $services = $this->db
+        $this->db
             ->distinct()
             ->select(
                 'services.*, service_categories.name AS service_category_name, service_categories.id AS service_category_id',
             )
             ->from('services')
-            ->join('services_providers', 'services_providers.id_services = services.id', 'inner')
+            ->join('services_providers', 'services_providers.id_services = services.id', 'inner');
+
+        if ($location_id) {
+            $this->db->join('locations_providers', 'locations_providers.user_id = services_providers.id_users', 'inner');
+            $this->db->where('locations_providers.location_id', $location_id);
+        }
+
+        if ($without_private) {
+            $this->db->where('services.is_private', false);
+        }
+
+        $services = $this->db
             ->join('service_categories', 'service_categories.id = services.id_service_categories', 'left')
             ->order_by('name ASC')
             ->get()

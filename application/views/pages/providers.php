@@ -287,6 +287,20 @@
                         <?= lang('working_plan') ?>
                     </h4>
 
+                    <div class="mb-3">
+                        <label class="form-label" for="working-plan-location">
+                            <?= lang('location') ?>
+                        </label>
+                        <select id="working-plan-location" class="form-select">
+                            <option value=""><?= lang('default') ?></option>
+                            <?php foreach (vars('locations') as $location): ?>
+                                <option value="<?= $location['id'] ?>">
+                                    <?= $location['name'] ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+
                     <button id="reset-working-plan" class="btn btn-primary"
                             data-tippy-content="<?= lang('reset_working_plan') ?>">
                         <i class="fas fa-undo-alt me-2"></i>

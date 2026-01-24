@@ -71,6 +71,7 @@ class Providers extends EA_Controller
         $this->load->model('providers_model');
         $this->load->model('services_model');
         $this->load->model('roles_model');
+        $this->load->model('locations_model');
 
         $this->load->library('accounts');
         $this->load->library('timezones');
@@ -119,6 +120,7 @@ class Providers extends EA_Controller
             'min_password_length' => MIN_PASSWORD_LENGTH,
             'timezones' => $this->timezones->to_array(),
             'services' => $services,
+            'locations' => $this->locations_model->get_all(),
             'default_language' => setting('default_language'),
             'default_timezone' => setting('default_timezone'),
         ]);
@@ -130,6 +132,7 @@ class Providers extends EA_Controller
             'grouped_timezones' => $this->timezones->to_grouped_array(),
             'privileges' => $this->roles_model->get_permissions_by_slug($role_slug),
             'services' => $this->services_model->get(),
+            'locations' => $this->locations_model->get_all(),
         ]);
 
         $this->load->view('pages/providers');
@@ -172,6 +175,22 @@ class Providers extends EA_Controller
             }
 
             $provider = request('provider');
+            $working_plan_location_id = request('working_plan_location_id');
+
+            $specific_working_plan = null;
+            $specific_working_plan_exceptions = null;
+
+            if ($working_plan_location_id) {
+                // Determine if we need to save specific working plan
+                if (isset($provider['settings']['working_plan'])) {
+                    $specific_working_plan = json_decode($provider['settings']['working_plan'], true);
+                    unset($provider['settings']['working_plan']);
+                }
+                 if (isset($provider['settings']['working_plan_exceptions'])) {
+                    $specific_working_plan_exceptions = json_decode($provider['settings']['working_plan_exceptions'], true);
+                    unset($provider['settings']['working_plan_exceptions']);
+                }
+            }
 
             $this->providers_model->only($provider, $this->allowed_provider_fields);
 
@@ -182,6 +201,14 @@ class Providers extends EA_Controller
             $this->providers_model->optional($provider['settings'], $this->optional_provider_setting_fields);
 
             $provider_id = $this->providers_model->save($provider);
+
+            if ($working_plan_location_id && $specific_working_plan) {
+                $wp_data = [
+                    'working_plan' => $specific_working_plan,
+                    'working_plan_exceptions' => $specific_working_plan_exceptions
+                ];
+                $this->providers_model->save_location_working_plan($provider_id, (int)$working_plan_location_id, $wp_data);
+            }
 
             $provider = $this->providers_model->find($provider_id);
 
@@ -227,6 +254,21 @@ class Providers extends EA_Controller
             }
 
             $provider = request('provider');
+            $working_plan_location_id = request('working_plan_location_id');
+
+            $specific_working_plan = null;
+            $specific_working_plan_exceptions = null;
+
+            if ($working_plan_location_id) {
+                if (isset($provider['settings']['working_plan'])) {
+                    $specific_working_plan = json_decode($provider['settings']['working_plan'], true);
+                    unset($provider['settings']['working_plan']);
+                }
+                 if (isset($provider['settings']['working_plan_exceptions'])) {
+                    $specific_working_plan_exceptions = json_decode($provider['settings']['working_plan_exceptions'], true);
+                    unset($provider['settings']['working_plan_exceptions']);
+                }
+            }
 
             $this->providers_model->only($provider, $this->allowed_provider_fields);
 
@@ -237,6 +279,14 @@ class Providers extends EA_Controller
             $this->providers_model->optional($provider['settings'], $this->optional_provider_setting_fields);
 
             $provider_id = $this->providers_model->save($provider);
+
+            if ($working_plan_location_id && $specific_working_plan) {
+                 $wp_data = [
+                    'working_plan' => $specific_working_plan,
+                    'working_plan_exceptions' => $specific_working_plan_exceptions
+                ];
+                $this->providers_model->save_location_working_plan($provider_id, (int)$working_plan_location_id, $wp_data);
+            }
 
             $provider = $this->providers_model->find($provider_id);
 
@@ -272,6 +322,35 @@ class Providers extends EA_Controller
             json_response([
                 'success' => true,
             ]);
+        } catch (Throwable $e) {
+            json_exception($e);
+        }
+    }
+
+    /**
+     * Get working plan for a provider and optional location.
+     */
+    public function get_working_plan(): void
+    {
+        try {
+            if (cannot('view', PRIV_USERS)) {
+                abort(403, 'Forbidden');
+            }
+
+            $provider_id = (int)request('provider_id');
+            $location_id = request('location_id') ? (int)request('location_id') : null;
+
+            if ($location_id) {
+                $plan = $this->providers_model->get_location_working_plan($provider_id, $location_id);
+            } else {
+                 $provider = $this->providers_model->find($provider_id);
+                 $plan = [
+                    'working_plan' => json_decode($provider['settings']['working_plan'], true),
+                    'working_plan_exceptions' => json_decode($provider['settings']['working_plan_exceptions'], true)
+                 ];
+            }
+
+            json_response($plan);
         } catch (Throwable $e) {
             json_exception($e);
         }

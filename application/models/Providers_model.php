@@ -604,6 +604,70 @@ class Providers_model extends EA_Model
      *
      * @throws Exception If $provider_id argument is invalid.
      */
+    /**
+     * Get working plan for a specific location.
+     *
+     * @param int $provider_id
+     * @param int|null $location_id
+     * @return array
+     */
+    public function get_location_working_plan(int $provider_id, ?int $location_id): array
+    {
+        if (!$location_id) {
+            return []; // Use default if no location
+        }
+
+        $row = $this->db->get_where('working_plans', [
+            'id_users_provider' => $provider_id,
+            'id_locations' => $location_id
+        ])->row_array();
+
+        if ($row) {
+            return [
+                'working_plan' => json_decode($row['working_plan'], true),
+                'working_plan_exceptions' => json_decode($row['working_plan_exceptions'], true)
+            ];
+        }
+
+        return [];
+    }
+
+    /**
+     * Save working plan for a specific location.
+     *
+     * @param int $provider_id
+     * @param int $location_id
+     * @param array $data should contain 'working_plan' and 'working_plan_exceptions'
+     */
+    public function save_location_working_plan(int $provider_id, int $location_id, array $data): void
+    {
+        $existing = $this->db->get_where('working_plans', [
+            'id_users_provider' => $provider_id,
+            'id_locations' => $location_id
+        ])->row_array();
+
+        $update_data = [
+            'working_plan' => json_encode($data['working_plan'] ?? new stdClass()),
+            'working_plan_exceptions' => json_encode($data['working_plan_exceptions'] ?? new stdClass())
+        ];
+
+        if ($existing) {
+            $this->db->update('working_plans', $update_data, ['id' => $existing['id']]);
+        } else {
+            $update_data['id_users_provider'] = $provider_id;
+            $update_data['id_locations'] = $location_id;
+            $this->db->insert('working_plans', $update_data);
+        }
+    }
+
+    /**
+     * Delete a provider working plan exception.
+     *
+     * @param string $date The working plan exception date (in YYYY-MM-DD format).
+     * @param int $provider_id The selected provider record id.
+     *
+     * @throws Exception If $provider_id argument is invalid.
+     */
     public function delete_working_plan_exception(int $provider_id, string $date): void
     {
         $provider = $this->find($provider_id);

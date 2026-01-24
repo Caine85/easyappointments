@@ -490,4 +490,8 @@ $lang['manage_locations_hint'] = 'Manage the company locations.';
 $lang['location_saved'] = 'Location saved successfully.';
 $lang['location_deleted'] = 'Location deleted successfully.';
 $lang['delete_location'] = 'Delete Location';
+$lang['select_location'] = 'Select Location';
+$lang['listDay'] = 'List Day';
+$lang['listWeek'] = 'List Week';
+$lang['listMonth'] = 'List Month';
 // End

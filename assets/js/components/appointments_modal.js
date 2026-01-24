@@ -98,7 +98,7 @@ App.Components.AppointmentsModal = (function () {
                 id_users_provider: $selectProvider.val(),
                 start_datetime: startDatetime,
                 end_datetime: endDatetime,
-                location: $appointmentLocation.val(),
+                location_id: $appointmentLocation.val(),
                 color: App.Components.ColorSelection.getColor($appointmentColor),
                 status: $appointmentStatus.val(),
                 notes: $appointmentNotes.val(),
@@ -200,13 +200,13 @@ App.Components.AppointmentsModal = (function () {
             const currentMin = parseInt(startMoment.format('mm'));
 
             if (currentMin > 0 && currentMin < 15) {
-                startMoment.set({minutes: 15});
+                startMoment.set({ minutes: 15 });
             } else if (currentMin > 15 && currentMin < 30) {
-                startMoment.set({minutes: 30});
+                startMoment.set({ minutes: 30 });
             } else if (currentMin > 30 && currentMin < 45) {
-                startMoment.set({minutes: 45});
+                startMoment.set({ minutes: 45 });
             } else {
-                startMoment.add(1, 'hour').set({minutes: 0});
+                startMoment.add(1, 'hour').set({ minutes: 0 });
             }
 
             App.Utils.UI.setDateTimePickerValue($startDatetime, startMoment.toDate());
@@ -455,6 +455,7 @@ App.Components.AppointmentsModal = (function () {
 
         // Reset color.
         $appointmentColor.find('.color-selection-option:first').trigger('click');
+        $appointmentLocation.val('');
 
         // Prepare service and provider select boxes.
         $selectService.val($selectService.eq(0).attr('value'));

@@ -15,6 +15,7 @@
                 <div class="mb-3">
                     <label for="select-location">
                         <strong><?= lang('location') ?></strong>
+                        <span class="text-danger">*</span>
                     </label>
 
                     <select id="select-location" class="form-select">

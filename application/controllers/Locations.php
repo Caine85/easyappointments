@@ -15,7 +15,8 @@ class Locations extends EA_Controller
         'address',
         'city',
         'zip_code',
-        'phone_number'
+        'phone_number',
+        'providers'
     ];
 
     /**
@@ -27,6 +28,7 @@ class Locations extends EA_Controller
 
         $this->load->model('locations_model');
         $this->load->model('roles_model');
+        $this->load->model('providers_model');
 
         $this->load->library('accounts');
     }
@@ -55,6 +57,7 @@ class Locations extends EA_Controller
         script_vars([
             'user_id' => $user_id,
             'role_slug' => $role_slug,
+            'providers' => $this->providers_model->get_available_providers(true),
         ]);
 
         html_vars([
@@ -62,6 +65,7 @@ class Locations extends EA_Controller
             'active_menu' => 'locations',
             'user_display_name' => $this->accounts->get_user_display_name($user_id),
             'privileges' => $this->roles_model->get_permissions_by_slug($role_slug),
+            'providers' => $this->providers_model->get_available_providers(true),
         ]);
 
         $this->load->view('pages/locations');

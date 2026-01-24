@@ -22,24 +22,29 @@ App.Http.Providers = (function () {
      *
      * @return {Object}
      */
-    function save(provider) {
-        return provider.id ? update(provider) : store(provider);
+    function save(provider, workingPlanLocationId = null) {
+        return provider.id ? update(provider, workingPlanLocationId) : store(provider, workingPlanLocationId);
     }
 
     /**
      * Create a provider.
      *
      * @param {Object} provider
+     * @param {Number|null} workingPlanLocationId
      *
      * @return {Object}
      */
-    function store(provider) {
+    function store(provider, workingPlanLocationId = null) {
         const url = App.Utils.Url.siteUrl('providers/store');
 
         const data = {
             csrf_token: vars('csrf_token'),
             provider: provider,
         };
+
+        if (workingPlanLocationId) {
+            data.working_plan_location_id = workingPlanLocationId;
+        }
 
         return $.post(url, data);
     }
@@ -48,16 +53,21 @@ App.Http.Providers = (function () {
      * Update a provider.
      *
      * @param {Object} provider
+     * @param {Number|null} workingPlanLocationId
      *
      * @return {Object}
      */
-    function update(provider) {
+    function update(provider, workingPlanLocationId = null) {
         const url = App.Utils.Url.siteUrl('providers/update');
 
         const data = {
             csrf_token: vars('csrf_token'),
             provider: provider,
         };
+
+        if (workingPlanLocationId) {
+            data.working_plan_location_id = workingPlanLocationId;
+        }
 
         return $.post(url, data);
     }
@@ -122,6 +132,25 @@ App.Http.Providers = (function () {
         return $.post(url, data);
     }
 
+    /**
+     * Get working plan for a provider and optional location.
+     * 
+     * @param {Number} providerId
+     * @param {Number|null} locationId
+     * @return {Object}
+     */
+    function getWorkingPlan(providerId, locationId) {
+        const url = App.Utils.Url.siteUrl('providers/get_working_plan');
+
+        const data = {
+            csrf_token: vars('csrf_token'),
+            provider_id: providerId,
+            location_id: locationId || undefined
+        };
+
+        return $.post(url, data);
+    }
+
     return {
         save,
         store,
@@ -129,5 +158,6 @@ App.Http.Providers = (function () {
         destroy,
         search,
         find,
+        getWorkingPlan,
     };
 })();

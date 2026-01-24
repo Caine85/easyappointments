@@ -37,9 +37,12 @@ App.Pages.Providers = (function () {
     const $notifications = $('#notifications');
     const $calendarView = $('#calendar-view');
     const $filterProviders = $('#filter-providers');
+    const $workingPlanLocation = $('#working-plan-location');
     let filterResults = {};
     let filterLimit = 20;
     let workingPlanManager;
+    let defaultWorkingPlan = {};
+    let defaultWorkingPlanExceptions = {};
 
     /**
      * Add the page event listeners.
@@ -201,7 +204,8 @@ App.Pages.Providers = (function () {
                 return;
             }
 
-            App.Pages.Providers.save(provider);
+            const workingPlanLocationId = $workingPlanLocation.val() ? Number($workingPlanLocation.val()) : null;
+            App.Pages.Providers.save(provider, workingPlanLocationId);
         });
 
         /**
@@ -228,6 +232,49 @@ App.Pages.Providers = (function () {
             workingPlanManager.setup(companyWorkingPlan);
             workingPlanManager.timepickers(false);
         });
+
+        /**
+         * Event: Working Plan Location "Change".
+         */
+        $workingPlanLocation.on('change', () => {
+            const providerId = $id.val();
+            const locationId = $workingPlanLocation.val();
+
+            if (!locationId) {
+                // Restore default working plan
+                workingPlanManager.setup(defaultWorkingPlan);
+                workingPlanManager.setupWorkingPlanExceptions(defaultWorkingPlanExceptions);
+                $('.working-plan').find('input').prop('disabled', false); // Assume editable if loaded
+                workingPlanManager.timepickers(false);
+                return;
+            }
+
+            if (!providerId) {
+                // New provider mode, maybe just reset to company plan for any location?
+                // Or keep current edits? 
+                // For simplicity, reset to company plan if location is selected for new provider
+                const companyWorkingPlan = JSON.parse(vars('company_working_plan'));
+                workingPlanManager.setup(companyWorkingPlan);
+                workingPlanManager.setupWorkingPlanExceptions({});
+                workingPlanManager.timepickers(false);
+                return;
+            }
+
+            App.Http.Providers.getWorkingPlan(providerId, locationId).then((response) => {
+                let plan = response.working_plan || defaultWorkingPlan;
+                let exceptions = response.working_plan_exceptions || defaultWorkingPlanExceptions;
+
+                // If the response is strictly empty array (no plan found), use default
+                if (Array.isArray(response) && response.length === 0) {
+                    plan = defaultWorkingPlan;
+                    exceptions = defaultWorkingPlanExceptions;
+                }
+
+                workingPlanManager.setup(plan);
+                workingPlanManager.setupWorkingPlanExceptions(exceptions);
+                workingPlanManager.timepickers(false);
+            });
+        });
     }
 
     /**
@@ -235,9 +282,10 @@ App.Pages.Providers = (function () {
      *
      * @param {Object} provider Contains the provider record data. If an 'id' value is provided
      * then the update operation is going to be executed.
+     * @param {Number|null} workingPlanLocationId
      */
-    function save(provider) {
-        App.Http.Providers.save(provider).then((response) => {
+    function save(provider, workingPlanLocationId = null) {
+        App.Http.Providers.save(provider, workingPlanLocationId).then((response) => {
             App.Layouts.Backend.displayNotification(lang('provider_saved'));
             App.Pages.Providers.resetForm();
             $('#filter-providers .key').val('');
@@ -364,6 +412,7 @@ App.Pages.Providers = (function () {
         $('#providers .working-plan tbody').empty();
         $('#providers .breaks tbody').empty();
         $('#providers .working-plan-exceptions tbody').empty();
+        $workingPlanLocation.val('');
     }
 
     /**
@@ -446,11 +495,16 @@ App.Pages.Providers = (function () {
 
         // Display working plan
         const workingPlan = JSON.parse(provider.settings.working_plan);
+        const workingPlanExceptions = JSON.parse(provider.settings.working_plan_exceptions);
+
+        defaultWorkingPlan = workingPlan;
+        defaultWorkingPlanExceptions = workingPlanExceptions;
+
         workingPlanManager.setup(workingPlan);
         $('.working-plan').find('input').prop('disabled', true);
         $('.breaks').find('.edit-break, .delete-break').prop('disabled', true);
         $providers.find('.working-plan-exceptions tbody').empty();
-        const workingPlanExceptions = JSON.parse(provider.settings.working_plan_exceptions);
+
         workingPlanManager.setupWorkingPlanExceptions(workingPlanExceptions);
         $('.working-plan-exceptions')
             .find('.edit-working-plan-exception, .delete-working-plan-exception')

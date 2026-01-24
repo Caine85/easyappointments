@@ -47,6 +47,7 @@ class Booking extends EA_Controller
         'start_datetime',
         'end_datetime',
         'location',
+        'location_id',
         'notes',
         'color',
         'status',
@@ -135,8 +136,10 @@ class Booking extends EA_Controller
             return;
         }
 
-        $available_services = $this->services_model->get_available_services(true);
-        $available_providers = $this->providers_model->get_available_providers(true);
+        $location_id = request('location_id') ? (int) request('location_id') : null;
+
+        $available_services = $this->services_model->get_available_services(true, $location_id);
+        $available_providers = $this->providers_model->get_available_providers(true, $location_id);
         $available_locations = $this->locations_model->get_all();
 
         foreach ($available_providers as &$available_provider) {
@@ -526,12 +529,15 @@ class Booking extends EA_Controller
         $exclude_appointment_id = $appointment['id'] ?? null;
 
         $provider = $this->providers_model->find($appointment['id_users_provider']);
+        
+        $location_id = isset($appointment['location_id']) ? (int)$appointment['location_id'] : null;
 
         $available_hours = $this->availability->get_available_hours(
             $date,
             $service,
             $provider,
             $exclude_appointment_id,
+            $location_id
         );
 
         $is_still_available = false;
@@ -579,7 +585,7 @@ class Booking extends EA_Controller
             foreach ($provider['services'] as $provider_service_id) {
                 if ($provider_service_id == $service_id) {
                     // Check if the provider is available for the requested date.
-                    $available_hours = $this->availability->get_available_hours($date, $service, $provider);
+                    $available_hours = $this->availability->get_available_hours($date, $service, $provider, null, $location_id);
 
                     if (
                         count($available_hours) > $max_hours_count &&
@@ -649,6 +655,7 @@ class Booking extends EA_Controller
                         $service,
                         $provider,
                         $exclude_appointment_id,
+                        $location_id
                     );
 
                     $available_hours = array_merge($available_hours, $provider_available_hours);
@@ -667,6 +674,7 @@ class Booking extends EA_Controller
                     $service,
                     $provider,
                     $exclude_appointment_id,
+                    $location_id
                 );
             }
 
@@ -699,6 +707,7 @@ class Booking extends EA_Controller
             $appointment_id = request('appointment_id');
             $manage_mode = filter_var(request('manage_mode'), FILTER_VALIDATE_BOOLEAN);
             $selected_date_string = request('selected_date');
+            $location_id = request('location_id') ? (int) request('location_id') : null;
             $selected_date = new DateTime($selected_date_string);
             $number_of_days_in_month = (int) $selected_date->format('t');
             $unavailable_dates = [];
@@ -729,6 +738,7 @@ class Booking extends EA_Controller
                         $service,
                         $provider,
                         $exclude_appointment_id,
+                        $location_id
                     );
 
                     if (!empty($available_hours)) {

@@ -444,8 +444,14 @@ App.Pages.Booking = (function () {
             const $target = $(event.currentTarget);
 
             // If we are on the first step and there is no provider selected do not continue with the next step.
-            if ($target.attr('data-step_index') === '1' && !$selectProvider.val()) {
-                return;
+            if ($target.attr('data-step_index') === '1') {
+                if (!$selectLocation.val()) {
+                    return;
+                }
+
+                if (!$selectProvider.val()) {
+                    return;
+                }
             }
 
             // If we are on the 2nd tab then the user should have an appointment hour selected.

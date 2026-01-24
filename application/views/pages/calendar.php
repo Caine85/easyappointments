@@ -5,12 +5,18 @@
 <div class="container-fluid backend-page" id="calendar-page">
     <div class="row" id="calendar-toolbar">
         <div id="calendar-filter" class="col-md-3">
-            <div class="calendar-filter-items">
+            <div class="calendar-filter-items d-flex">
                 <select id="select-filter-item"
                         class="form-select col"
                         data-tippy-content="<?= lang('select_filter_item_hint') ?>"
                         aria-label="Filter">
                     <!-- JS -->
+                </select>
+
+                <select id="select-filter-location"
+                        class="form-select col ms-2"
+                        data-tippy-content="<?= lang('select_location') ?>"
+                        aria-label="Filter Location">
                 </select>
             </div>
         </div>
@@ -118,6 +124,7 @@
     'require_city' => vars('require_city'),
     'require_zip_code' => vars('require_zip_code'),
     'require_notes' => vars('require_notes'),
+    'available_locations' => vars('available_locations'),
 ]); ?>
 
 <?php component('unavailabilities_modal', [

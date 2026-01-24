@@ -72,6 +72,7 @@ App.Pages.Locations = (function () {
             $locations.find('.save-cancel-group').show();
             $locations.find('.record-details').find('input, select, textarea').prop('disabled', false);
             $locations.find('.record-details .form-label span').prop('hidden', false);
+            $('#location-providers input:checkbox').prop('disabled', false);
             $filterLocations.find('button').prop('disabled', true);
             $filterLocations.find('.results').css('color', '#AAA');
 
@@ -106,6 +107,14 @@ App.Pages.Locations = (function () {
                 phone_number: $phoneNumber.val(),
             };
 
+            // Include location providers.
+            location.providers = [];
+            $('#location-providers input:checkbox').each((index, checkboxEl) => {
+                if ($(checkboxEl).prop('checked')) {
+                    location.providers.push($(checkboxEl).attr('data-id'));
+                }
+            });
+
             if ($id.val() !== '') {
                 location.id = $id.val();
             }
@@ -125,6 +134,7 @@ App.Pages.Locations = (function () {
             $locations.find('.save-cancel-group').show();
             $locations.find('.record-details').find('input, select, textarea').prop('disabled', false);
             $locations.find('.record-details .form-label span').prop('hidden', false);
+            $('#location-providers input:checkbox').prop('disabled', false);
             $filterLocations.find('button').prop('disabled', true);
             $filterLocations.find('.results').css('color', '#AAA');
         });
@@ -226,7 +236,9 @@ App.Pages.Locations = (function () {
 
         $locations.find('.add-edit-delete-group').show();
         $locations.find('.save-cancel-group').hide();
+        $locations.find('.save-cancel-group').hide();
         $('#edit-location, #delete-location').prop('disabled', true);
+        $('#location-providers input:checkbox').prop('disabled', true).prop('checked', false);
 
         $locations.find('.record-details .is-invalid').removeClass('is-invalid');
         $locations.find('.record-details .form-message').hide();
@@ -244,6 +256,15 @@ App.Pages.Locations = (function () {
         $city.val(location.city);
         $zipCode.val(location.zip_code);
         $phoneNumber.val(location.phone_number);
+        $phoneNumber.val(location.phone_number);
+
+        $('#location-providers input:checkbox').prop('checked', false);
+
+        if (location.providers) {
+            location.providers.forEach((providerId) => {
+                $('#location-providers input[data-id="' + providerId + '"]').prop('checked', true);
+            });
+        }
     }
 
     /**
@@ -348,6 +369,35 @@ App.Pages.Locations = (function () {
         App.Pages.Locations.resetForm();
         App.Pages.Locations.filter('');
         App.Pages.Locations.addEventListeners();
+
+        vars('providers').forEach((provider) => {
+            const checkboxId = `location-provider-${provider.id}`;
+
+            $('<div/>', {
+                'class': 'checkbox',
+                'html': [
+                    $('<div/>', {
+                        'class': 'checkbox form-check',
+                        'html': [
+                            $('<input/>', {
+                                'id': checkboxId,
+                                'class': 'form-check-input',
+                                'type': 'checkbox',
+                                'data-id': provider.id,
+                                'prop': {
+                                    'disabled': true,
+                                },
+                            }),
+                            $('<label/>', {
+                                'class': 'form-check-label',
+                                'text': provider.first_name + ' ' + provider.last_name,
+                                'for': checkboxId,
+                            }),
+                        ],
+                    }),
+                ],
+            }).appendTo('#location-providers');
+        });
     }
 
     document.addEventListener('DOMContentLoaded', initialize);
